@@ -2,7 +2,7 @@ GEM
   remote: https://rubygems.org/
   specs:
     backports (3.6.4)
-    gares (0.1.3)
+    gares (0.1.4)
       hashie (~> 3.4)
       nokogiri (~> 1.6)
       unidecoder (~> 1.1)
