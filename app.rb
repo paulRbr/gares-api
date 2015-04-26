@@ -31,6 +31,34 @@ class App < Grape::API
       end
       result.merge more_data
     end
+
+    def serialize_train(train, short: false)
+      return nil if train.nil?
+
+      result = {
+        number: train.number,
+        date: train.date,
+      }
+      more_data = {
+        delayed: train.delayed?
+      }
+      unless short
+        more_data.merge!(
+          from: {
+            station: serialize_gare(train.departure.station, short: true),
+            platform: train.departure.platform
+          },
+          stops: train.stops.map{ |stop| { station: serialize_gare(stop.station, short: true), platform: stop.platform } },
+          to: {
+            station: serialize_gare(train.arrival.station, short: true),
+            platform: train.arrival.platform
+          },
+          departure_date: train.departure.departure_date,
+          arrival_date: train.arrival.arrival_date,
+        )
+      end
+      result.merge more_data
+    end
   end
 
   resource :gares do
@@ -40,7 +68,7 @@ class App < Grape::API
     end
     route_param :slug do
       get do
-        gare = Gares::Gare.new(params[:slug])
+        gare = Gares::Station.new(params[:slug])
 
         serialize_gare(gare)
       end
@@ -53,7 +81,7 @@ class App < Grape::API
     resource :search do
       route_param :blob do
         get do
-          gares = Gares::Gare.search(params[:blob])
+          gares = Gares::Station.search(params[:blob])
 
           gares.map { |gare| serialize_gare(gare, short: true) }
         end
@@ -67,13 +95,30 @@ class App < Grape::API
       route_param :blob do
         route_param :id do
           get do
-            gares = Gares::Search.new(params[:blob]).gares
+            gares = Gares::Search.new(params[:blob]).stations
             begin
               serialize_gare(gares[params[:id]])
             rescue
               { message: "id must be > -#{gares.size} and < #{gares.size}" }
             end
           end
+         end
+      end
+    end
+  end
+
+  resource :train do
+    desc "Return detailed information about a train given its number and date."
+    params do
+      requires :number, type: Integer, desc: "Train number."
+      requires :date,   type: String, desc: "Train date in YYYY-MM-DD format.", allow_blank: false, regexp: /^[0-9]{4}-[0-1][0-9]-[0-3][0-9]$/
+    end
+    route_param :number do
+      route_param :date do
+        get do
+          train = Gares::Train.new(params[:number], Time.parse(params[:date]))
+
+          serialize_train(train)
         end
       end
     end
