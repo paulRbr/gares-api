@@ -72,7 +72,7 @@ PLATFORMS
   ruby
 
 DEPENDENCIES
-  gares (~> 2.0.0.pre.dev2)
+  gares (~> 2.0.dev)
   grape
   grape-swagger
   rack (= 1.5.2)
