@@ -19,7 +19,7 @@ class App < Grape::API
       }
       if short
         more_data = {
-          slug: gare.slug
+          sncf_id: gare.sncf_id
         }
       else
         more_data = {
@@ -61,14 +61,14 @@ class App < Grape::API
     end
   end
 
-  resource :gares do
-    desc "Return detailed information of a gare given its slug."
+  resource :stations do
+    desc "Return detailed information of a station given its sncf_id."
     params do
-      requires :slug, type: String, desc: "Slug of a gare."
+      requires :sncf_id, type: String, desc: "Sncf_id of a station."
     end
-    route_param :slug do
+    route_param :sncf_id do
       get do
-        gare = Gares::Station.new(params[:slug])
+        gare = Gares::Station.search_by_sncf_id(params[:sncf_id]).first
 
         serialize_gare(gare)
       end
@@ -95,7 +95,7 @@ class App < Grape::API
       route_param :blob do
         route_param :id do
           get do
-            gares = Gares::Search.new(params[:blob]).stations
+            gares = Gares::Station.search(params[:blob])
             begin
               serialize_gare(gares[params[:id]])
             rescue
