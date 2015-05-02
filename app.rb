@@ -1,5 +1,6 @@
 require 'grape'
 require 'grape-swagger'
+require 'json'
 require 'gares'
 
 class App < Grape::API
@@ -116,9 +117,13 @@ class App < Grape::API
     route_param :number do
       route_param :date do
         get do
-          train = Gares::Train.new(params[:number], Time.parse(params[:date]))
+          begin
+            train = Gares::Train.new(params[:number], Time.parse(params[:date]))
 
-          serialize_train(train)
+            serialize_train(train)
+          rescue Gares::TrainNotFound => e
+            { :error => e.message }
+          end
         end
       end
     end
