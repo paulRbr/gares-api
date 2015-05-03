@@ -132,7 +132,7 @@ class App < Grape::API
       route_param :date do
         get do
           begin
-            train = Gares::Train.new(params[:number], Time.parse(params[:date]))
+            train = Gares::Train.new(num: params[:number], date: Time.parse(params[:date]))
 
             serialize_train(train)
           rescue Gares::TrainNotFound => e
