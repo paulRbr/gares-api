@@ -44,17 +44,17 @@ class App < Grape::API
         platform: train.platform,
         time: train.heure,
         infos: train.infos,
-        origdest: serialize_gare(train.origdest, short = true),
+        origdest: serialize_gare(train.origdest, true),
       }
       unless short
         more_data.merge!(
           from: {
-            station: serialize_gare(train.departure.station, short = true),
+            station: serialize_gare(train.departure.station, true),
             platform: train.departure.platform
           },
-          stops: train.stops.map{ |stop| { station: serialize_gare(stop.station, short = true), platform: stop.platform } },
+          stops: train.stops.map{ |stop| { station: serialize_gare(stop.station, true), platform: stop.platform } },
           to: {
-            station: serialize_gare(train.arrival.station, short = true),
+            station: serialize_gare(train.arrival.station, true),
             platform: train.arrival.platform
           },
           departure_date: train.departure.departure_date,
@@ -84,7 +84,7 @@ class App < Grape::API
           gare = Gares::Station.find_by_sncf_id(params[:sncf_id])
           trains = gare && gare.send(params[:direction]) || []
 
-          trains.map { |train| serialize_train(train, short = true) }
+          trains.map { |train| serialize_train(train, true) }
         end
       end
     end
@@ -98,7 +98,7 @@ class App < Grape::API
         get do
           gares = Gares::Station.search(params[:blob])
 
-          gares.map { |gare| serialize_gare(gare, short = true) }
+          gares.map { |gare| serialize_gare(gare, true) }
         end
       end
 
