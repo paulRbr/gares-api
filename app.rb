@@ -12,7 +12,7 @@ class App < Grape::API
   end
 
   helpers do
-    def serialize_gare(gare, short: false)
+    def serialize_gare(gare, short = false)
       return nil if gare.nil? || gare.name.nil?
 
       result = {
@@ -26,14 +26,13 @@ class App < Grape::API
         more_data = {
           lat: gare.lat,
           long: gare.long,
-          services: gare.services,
           borne: gare.has_borne?
         }
       end
       result.merge more_data
     end
 
-    def serialize_train(train, short: false)
+    def serialize_train(train, short = false)
       return nil if train.nil?
 
       result = {
@@ -41,17 +40,21 @@ class App < Grape::API
         date: train.date,
       }
       more_data = {
-        delayed: train.delayed?
+        delayed: train.delayed?,
+        platform: train.platform,
+        time: train.heure,
+        infos: train.infos,
+        origdest: serialize_gare(train.origdest, short = true),
       }
       unless short
         more_data.merge!(
           from: {
-            station: serialize_gare(train.departure.station, short: true),
+            station: serialize_gare(train.departure.station, short = true),
             platform: train.departure.platform
           },
-          stops: train.stops.map{ |stop| { station: serialize_gare(stop.station, short: true), platform: stop.platform } },
+          stops: train.stops.map{ |stop| { station: serialize_gare(stop.station, short = true), platform: stop.platform } },
           to: {
-            station: serialize_gare(train.arrival.station, short: true),
+            station: serialize_gare(train.arrival.station, short = true),
             platform: train.arrival.platform
           },
           departure_date: train.departure.departure_date,
@@ -69,9 +72,20 @@ class App < Grape::API
     end
     route_param :sncf_id do
       get do
-        gare = Gares::Station.search_by_sncf_id(params[:sncf_id]).first
+        gare = Gares::Station.find_by_sncf_id(params[:sncf_id])
 
         serialize_gare(gare)
+      end
+      params do
+        requires :direction, type: Symbol, values: [:departures, :arrivals]
+      end
+      route_param :direction do
+        get do
+          gare = Gares::Station.find_by_sncf_id(params[:sncf_id])
+          trains = gare && gare.send(params[:direction]) || []
+
+          trains.map { |train| serialize_train(train, short = true) }
+        end
       end
     end
 
@@ -84,7 +98,7 @@ class App < Grape::API
         get do
           gares = Gares::Station.search(params[:blob])
 
-          gares.map { |gare| serialize_gare(gare, short: true) }
+          gares.map { |gare| serialize_gare(gare, short = true) }
         end
       end
 
