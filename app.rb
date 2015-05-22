@@ -66,29 +66,6 @@ class App < Grape::API
   end
 
   resource :stations do
-    desc "Return detailed information of a station given its sncf_id."
-    params do
-      requires :sncf_id, type: String, desc: "Sncf_id of a station."
-    end
-    route_param :sncf_id do
-      get do
-        gare = Gares::Station.find_by_sncf_id(params[:sncf_id])
-
-        serialize_gare(gare)
-      end
-      params do
-        requires :direction, type: Symbol, values: [:departures, :arrivals]
-      end
-      route_param :direction do
-        get do
-          gare = Gares::Station.find_by_sncf_id(params[:sncf_id])
-          trains = gare && gare.send(params[:direction]) || []
-
-          trains.map { |train| serialize_train(train, true) }
-        end
-      end
-    end
-
     desc "Return a list of gares names that match the given blob."
     params do
       requires :blob, type: String, desc: "Blob to search."
@@ -118,6 +95,29 @@ class App < Grape::API
             end
           end
          end
+      end
+    end
+
+    desc "Return detailed information of a station given its sncf_id."
+    params do
+      requires :sncf_id, type: String, desc: "Sncf_id of a station."
+    end
+    route_param :sncf_id do
+      get do
+        gare = Gares::Station.find_by_sncf_id(params[:sncf_id])
+
+        serialize_gare(gare)
+      end
+      params do
+        requires :direction, type: Symbol, values: [:departures, :arrivals]
+      end
+      route_param :direction do
+        get do
+          gare = Gares::Station.find_by_sncf_id(params[:sncf_id])
+          trains = gare && gare.send(params[:direction]) || []
+
+          trains.map { |train| serialize_train(train, true) }
+        end
       end
     end
   end
